@@ -1,16 +1,14 @@
-name: Build and Push Docker Image (ARM64)
+name: Build and Push Docker Image (Multi-Arch)
 
 on:
   push:
     branches:
       - main
-      - develop
     tags:
       - 'v*.*.*'
   pull_request:
     branches:
       - main
-      - develop
   workflow_dispatch:
     inputs:
       push_image:
@@ -24,7 +22,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build-arm64:
+  build-multiarch:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -37,12 +35,10 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
         with:
-          platforms: arm64
+          platforms: linux/amd64,linux/arm64
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          platforms: linux/arm64
 
       - name: Log in to Container Registry
         if: github.event_name != 'pull_request'
@@ -66,18 +62,17 @@ jobs:
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build Docker image for ARM64
+      - name: Build and push Docker image (Multi-Arch)
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
-          platforms: linux/arm64
+          file: ./Dockerfile_multiarch
+          platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' && (github.event.inputs.push_image != 'false') }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          outputs: type=image,name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }},push-by-digest=false
 
       - name: Image digest
-        run: echo "Image built successfully for ARM64 architecture"
+        run: echo "Image built successfully for AMD64 and ARM64 architectures"

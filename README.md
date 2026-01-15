@@ -1,74 +1,163 @@
-# Baby-Safety-Reminder
+0 Build image
 
-## Zonal ECU component
+podman build -f Dockerfile_multiarch -t bsr_zonal_amd64 --platform l
+inux/amd64 .
 
-## 🚀 GitHub Actions CI/CD (ARM64)
+1 Run broker
 
-Workflow tự động build Docker image cho ARM64 architecture và push lên GitHub Container Registry.
+podman run -it --rm --name Server --network host -v ./vss.json:/opt/kuksa ghcr.io/eclipse-kuksa/kuksa-databroker:main --insecure --vss /opt/kuksa
 
-### Quick Setup (Recommended)
+2 Grant device permission
 
-**Bước 1:** Tạo repository trên GitHub: https://github.com/new
+2.1 lsusb
 
-**Bước 2:** Chạy script tự động:
-```bash
-./setup_github.sh <github-username> <repo-name>
+2.2 find device with ID in run.sh
 
-# Ví dụ:
-./setup_github.sh minhtuan958 zonal-ecu
-```
+2.3 sudo chmod 777 /dev/bus/usb/<device_bus_address>
 
-**Bước 3:** Cấu hình permissions và kiểm tra workflow chạy!
+3 Run Zonal
 
-### Manual Setup
+podman run --rm -it --network host --device=/dev/bus/usb/003/011 27ceb98daf4d -loopback=1 127.0.0.1:55555
 
-```bash
-# Thêm remote repository
-git remote add origin https://github.com/<username>/<repo>.git
+Check result
 
-# Push code
-git push -u origin main
+podman run -it --rm --network host ghcr.io/eclipse-kuksa/kuksa-databroker-cli:main --server 0.0.0.0:55555
 
-# Pull image sau khi build xong
-docker pull ghcr.io/<username>/<repo>:latest
-```
+Using kuksa.val.v1
 
-📖 **Hướng dẫn chi tiết:** 
-- [GITHUB_SETUP.md](GITHUB_SETUP.md) - Setup từng bước
-- [.github/workflows/README.md](.github/workflows/README.md) - Workflow documentation
 
----
 
-### Build (Local)
-```bash
-sudo podman build -t zonal_app .
-```
+  ⠀⠀⠀⢀⣤⣶⣾⣿⢸⣿⣿⣷⣶⣤⡀
 
-### Save image
-```bash
-sudo podman save -o zonal_app.tar localhost/zonal_app:latest
-```
+  ⠀⠀⣴⣿⡿⠋⣿⣿⠀⠀⠀⠈⠙⢿⣿⣦⠀
 
-### Load
-```bash
-sudo podman load -i zonal_app.tar
-```
+  ⠀⣾⣿⠋⠀⠀⣿⣿⠀⠀⣶⣿⠀⠀⠙⣿⣷   
 
-### Run
-```bash
-# sudo podman run --rm -it --device=/dev/bus/usb/001/006 zonal_app -loopback=1 192.168.0.3:55555
-sudo ./run.sh <image> [optional] <brokerIP:brokerPORT>
-```
+  ⣸⣿⠇⠀⠀⠀⣿⣿⠠⣾⡿⠃⠀⠀⠀⠸⣿⣇⠀⠀⣶⠀⣠⡶⠂⠀⣶⠀⠀⢰⡆⠀⢰⡆⢀⣴⠖⠀⢠⡶⠶⠶⡦⠀⠀⠀⣰⣶⡀
 
-### Run local Kuksa databroker
-```bash
-sudo podman run -it --rm --name Server --network kuksa ghcr.io/eclipse-kuksa/kuksa-databroker:main --insecure
-```
-Open new terminal
-```bash
-sudo podman run -it --rm --network kuksa ghcr.io/eclipse-kuksa/kuksa-databroker-cli:main --server Server1:55555
-```
-Get local Kuksa databroker IP
-```bash
-sudo podman inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' Server2
-```
+  ⣿⣿⠀⠀⠀⠀⠿⢿⣷⣦⡀⠀⠀⠀⠀⠀⣿⣿⠀⠀⣿⢾⣏⠀⠀⠀⣿⠀⠀⢸⡇⠀⢸⡷⣿⡁⠀⠀⠘⠷⠶⠶⣦⠀⠀⢠⡟⠘⣷
+
+  ⢹⣿⡆⠀⠀⠀⣿⣶⠈⢻⣿⡆⠀⠀⠀⢰⣿⡏⠀⠀⠿⠀⠙⠷⠄⠀⠙⠷⠶⠟⠁⠀⠸⠇⠈⠻⠦⠀⠐⠷⠶⠶⠟⠀⠠⠿⠁⠀⠹⠧
+
+  ⠀⢿⣿⣄⠀⠀⣿⣿⠀⠀⠿⣿⠀⠀⣠⣿⡿
+
+  ⠀⠀⠻⣿⣷⡄⣿⣿⠀⠀⠀⢀⣠⣾⣿⠟    databroker-cli                
+
+  ⠀⠀⠀⠈⠛⠇⢿⣿⣿⣿⣿⡿⠿⠛⠁     v0.6.1-dev.0                  
+
+
+
+Successfully connected to http://0.0.0.0:55555/
+
+kuksa.val.v1 > subscribe Vehicle.Cabin.Light.Spotlight.Row1.PassengerSide.IsLightOn
+
+[subscribe]  OK [1]  
+
+Subscription is now running in the background. Received data is identified by [1].
+
+kuksa.val.v1 > subscribe Vehicle.Cabin.Seat.Row1.PassengerSide.Airbag.IsDeployed
+
+[subscribe]  OK [2] Vehicle.Cabin.Seat.Row1.PassengerSide.Airbag.IsDeployed: true 
+
+
+Subscription is now running in the background. Received data is identified by [2].
+
+kuksa.val.v1 > subscribe Vehicle.Cabin.Seat.Row1.PassengerSide.AirbagIndicator.AirbagIsEnable.IsSignaling
+
+[subscribe]  OK  
+
+[3] Subscription is now running in the background. Received data is identified by [3].
+
+kuksa.val.v1 > publish Vehicle.Cabin.Light.Spotlight.Row1.PassengerSide.IsLightOn true
+
+[publish]  OK  
+
+[1] Vehicle.Cabin.Light.Spotlight.Row1.PassengerSide.IsLightOn: true m
+
+[2] Vehicle.Cabin.Seat.Row1.PassengerSide.Airbag.IsDeployed: true m
+
+kuksa.val.v1 > publish Vehicle.Cabin.Light.Spotlight.Row1.PassengerSide.IsLightOn true
+
+[1] Vehicle.Cabin.Light.Spotlight.Row1.PassengerSide.IsLightOn: true m
+
+2;37m[publish]  OK  
+
+kuksa.val.v1 > publish Vehicle.Cabin.Light.Spotlight.Row1.PassengerSide.IsLightOn false
+
+[1] Vehicle.Cabin.Light.Spotlight.Row1.PassengerSide.IsLightOn: false m
+
+[publish]  OK  
+
+[2] Vehicle.Cabin.Seat.Row1.PassengerSide.Airbag.IsDeployed: false m
+
+podman run -it --rm --network host ghcr.io/eclipse-kuksa/kuksa-databroker-cli:main --server 0.0.0.0:55555
+Using kuksa.val.v1
+
+  ⠀⠀⠀⢀⣤⣶⣾⣿⢸⣿⣿⣷⣶⣤⡀
+  ⠀⠀⣴⣿⡿⠋⣿⣿⠀⠀⠀⠈⠙⢿⣿⣦⠀
+  ⠀⣾⣿⠋⠀⠀⣿⣿⠀⠀⣶⣿⠀⠀⠙⣿⣷
+  ⣸⣿⠇⠀⠀⠀⣿⣿⠠⣾⡿⠃⠀⠀⠀⠸⣿⣇⠀⠀⣶⠀⣠⡶⠂⠀⣶⠀⠀⢰⡆⠀⢰⡆⢀⣴⠖⠀⢠⡶⠶⠶⡦⠀⠀⠀⣰⣶⡀
+  ⣿⣿⠀⠀⠀⠀⠿⢿⣷⣦⡀⠀⠀⠀⠀⠀⣿⣿⠀⠀⣿⢾⣏⠀⠀⠀⣿⠀⠀⢸⡇⠀⢸⡷⣿⡁⠀⠀⠘⠷⠶⠶⣦⠀⠀⢠⡟⠘⣷
+  ⢹⣿⡆⠀⠀⠀⣿⣶⠈⢻⣿⡆⠀⠀⠀⢰⣿⡏⠀⠀⠿⠀⠙⠷⠄⠀⠙⠷⠶⠟⠁⠀⠸⠇⠈⠻⠦⠀⠐⠷⠶⠶⠟⠀⠠⠿⠁⠀⠹⠧
+  ⠀⢿⣿⣄⠀⠀⣿⣿⠀⠀⠿⣿⠀⠀⣠⣿⡿
+  ⠀⠀⠻⣿⣷⡄⣿⣿⠀⠀⠀⢀⣠⣾⣿⠟    databroker-cli
+  ⠀⠀⠀⠈⠛⠇⢿⣿⣿⣿⣿⡿⠿⠛⠁     v0.6.1-dev.0
+
+Successfully connected to http://0.0.0.0:55555/
+kuksa.val.v1 > subscribe Vehicle.Cabin.Light.Spotlight.Row1.PassengerSide.IsLightOn
+[subscribe]  OK [1]
+Subscription is now running in the background. Received data is identified by [1].
+kuksa.val.v1 > subscribe Vehicle.Cabin.Seat.Row1.PassengerSide.Airbag.IsDeployed
+[subscribe]  OK [2] Vehicle.Cabin.Seat.Row1.PassengerSide.Airbag.IsDeployed: true
+
+Subscription is now running in the background. Received data is identified by [2].
+kuksa.val.v1 > subscribe Vehicle.Cabin.Seat.Row1.PassengerSide.AirbagIndicator.AirbagIsEnable.IsSignaling
+[subscribe]  OK
+[3] Subscription is now running in the background. Received data is identified by [3].
+kuksa.val.v1 > publish Vehicle.Cabin.Light.Spotlight.Row1.PassengerSide.IsLightOn true
+[publish]  OK
+[1] Vehicle.Cabin.Light.Spotlight.Row1.PassengerSide.IsLightOn: true m
+[2] Vehicle.Cabin.Seat.Row1.PassengerSide.Airbag.IsDeployed: true m
+kuksa.val.v1 > publish Vehicle.Cabin.Light.Spotlight.Row1.PassengerSide.IsLightOn true
+[1] Vehicle.Cabin.Light.Spotlight.Row1.PassengerSide.IsLightOn: true m
+2;37m[publish]  OK
+kuksa.val.v1 > publish Vehicle.Cabin.Light.Spotlight.Row1.PassengerSide.IsLightOn false
+[1] Vehicle.Cabin.Light.Spotlight.Row1.PassengerSide.IsLightOn: false m
+[publish]  OK
+[2] Vehicle.Cabin.Seat.Row1.PassengerSide.Airbag.IsDeployed: false m
+
+podman run -it --rm --network host ghcr.io/eclipse-kuksa/kuksa-databroker-cli:main --server 0.0.0.0:55555
+Using kuksa.val.v1
+
+  ⠀⠀⠀⢀⣤⣶⣾⣿⢸⣿⣿⣷⣶⣤⡀
+  ⠀⠀⣴⣿⡿⠋⣿⣿⠀⠀⠀⠈⠙⢿⣿⣦⠀
+  ⠀⣾⣿⠋⠀⠀⣿⣿⠀⠀⣶⣿⠀⠀⠙⣿⣷
+  ⣸⣿⠇⠀⠀⠀⣿⣿⠠⣾⡿⠃⠀⠀⠀⠸⣿⣇⠀⠀⣶⠀⣠⡶⠂⠀⣶⠀⠀⢰⡆⠀⢰⡆⢀⣴⠖⠀⢠⡶⠶⠶⡦⠀⠀⠀⣰⣶⡀
+  ⣿⣿⠀⠀⠀⠀⠿⢿⣷⣦⡀⠀⠀⠀⠀⠀⣿⣿⠀⠀⣿⢾⣏⠀⠀⠀⣿⠀⠀⢸⡇⠀⢸⡷⣿⡁⠀⠀⠘⠷⠶⠶⣦⠀⠀⢠⡟⠘⣷
+  ⢹⣿⡆⠀⠀⠀⣿⣶⠈⢻⣿⡆⠀⠀⠀⢰⣿⡏⠀⠀⠿⠀⠙⠷⠄⠀⠙⠷⠶⠟⠁⠀⠸⠇⠈⠻⠦⠀⠐⠷⠶⠶⠟⠀⠠⠿⠁⠀⠹⠧
+  ⠀⢿⣿⣄⠀⠀⣿⣿⠀⠀⠿⣿⠀⠀⣠⣿⡿
+  ⠀⠀⠻⣿⣷⡄⣿⣿⠀⠀⠀⢀⣠⣾⣿⠟    databroker-cli
+  ⠀⠀⠀⠈⠛⠇⢿⣿⣿⣿⣿⡿⠿⠛⠁     v0.6.1-dev.0
+
+Successfully connected to http://0.0.0.0:55555/
+kuksa.val.v1 > subscribe Vehicle.Cabin.Light.Spotlight.Row1.PassengerSide.IsLightOn
+[subscribe]  OK [1]
+Subscription is now running in the background. Received data is identified by [1].
+kuksa.val.v1 > subscribe Vehicle.Cabin.Seat.Row1.PassengerSide.Airbag.IsDeployed
+[subscribe]  OK [2] Vehicle.Cabin.Seat.Row1.PassengerSide.Airbag.IsDeployed: true
+
+Subscription is now running in the background. Received data is identified by [2].
+kuksa.val.v1 > subscribe Vehicle.Cabin.Seat.Row1.PassengerSide.AirbagIndicator.AirbagIsEnable.IsSignaling
+[subscribe]  OK
+[3] Subscription is now running in the background. Received data is identified by [3].
+kuksa.val.v1 > publish Vehicle.Cabin.Light.Spotlight.Row1.PassengerSide.IsLightOn true
+[publish]  OK
+[1] Vehicle.Cabin.Light.Spotlight.Row1.PassengerSide.IsLightOn: true m
+[2] Vehicle.Cabin.Seat.Row1.PassengerSide.Airbag.IsDeployed: true m
+kuksa.val.v1 > publish Vehicle.Cabin.Light.Spotlight.Row1.PassengerSide.IsLightOn true
+[1] Vehicle.Cabin.Light.Spotlight.Row1.PassengerSide.IsLightOn: true m
+2;37m[publish]  OK
+kuksa.val.v1 > publish Vehicle.Cabin.Light.Spotlight.Row1.PassengerSide.IsLightOn false
+[1] Vehicle.Cabin.Light.Spotlight.Row1.PassengerSide.IsLightOn: false m
+[publish]  OK
+[2] Vehicle.Cabin.Seat.Row1.PassengerSide.Airbag.IsDeployed: false m

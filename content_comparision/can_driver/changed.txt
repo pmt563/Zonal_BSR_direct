@@ -1,0 +1,10 @@
+Pic 1 & 2: comment
+Pic 3 & 4: 
+    Exist: CAN
+    New: CAN FD
+
+    Exist: Access CAN frame through CAN frame array, but the array only has 1 element
+        (index = 0 of array with element = CAN frame)
+    New: Access CAN frame directly 
+
+    

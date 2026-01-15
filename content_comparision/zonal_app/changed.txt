@@ -1,0 +1,1 @@
+1 & 2: Remove compare ischanged value mechanism
