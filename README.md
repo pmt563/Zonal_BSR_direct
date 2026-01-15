@@ -6,18 +6,36 @@
 
 Workflow tự động build Docker image cho ARM64 architecture và push lên GitHub Container Registry.
 
-**Quick Start:**
-```bash
-# Push code lên GitHub để trigger workflow
-git add .
-git commit -m "Trigger ARM64 build"
-git push origin main
+### Quick Setup (Recommended)
 
-# Pull image đã build
+**Bước 1:** Tạo repository trên GitHub: https://github.com/new
+
+**Bước 2:** Chạy script tự động:
+```bash
+./setup_github.sh <github-username> <repo-name>
+
+# Ví dụ:
+./setup_github.sh minhtuan958 zonal-ecu
+```
+
+**Bước 3:** Cấu hình permissions và kiểm tra workflow chạy!
+
+### Manual Setup
+
+```bash
+# Thêm remote repository
+git remote add origin https://github.com/<username>/<repo>.git
+
+# Push code
+git push -u origin main
+
+# Pull image sau khi build xong
 docker pull ghcr.io/<username>/<repo>:latest
 ```
 
-📖 **Chi tiết:** Xem [.github/workflows/README.md](.github/workflows/README.md)
+📖 **Hướng dẫn chi tiết:** 
+- [GITHUB_SETUP.md](GITHUB_SETUP.md) - Setup từng bước
+- [.github/workflows/README.md](.github/workflows/README.md) - Workflow documentation
 
 ---
 
