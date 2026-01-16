@@ -1,0 +1,41 @@
+# Multi-stage Dockerfile for vECU KUKSA Connection
+# Supports AMD64 and ARM64 architectures
+
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies required by FMPy and matplotlib
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements file
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application files
+COPY src/ ./src/
+COPY fmus/ ./fmus/
+
+# Set Python to run in unbuffered mode for better logging
+ENV PYTHONUNBUFFERED=1
+
+# Set the working directory to src for proper imports
+WORKDIR /app/src
+
+# Entry point - run the Python script with arguments
+ENTRYPOINT ["python", "host_cosim_and_connect_kuksa.py"]
+
+# Default argument - can be overridden when running the container
+CMD ["localhost:55555"]
+
