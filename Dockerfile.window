@@ -1,0 +1,30 @@
+FROM mcr.microsoft.com/windows/servercore:ltsc2022
+
+SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
+
+WORKDIR C:\app
+
+RUN Invoke-WebRequest -Uri 'https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe' -OutFile 'C:\python-installer.exe'; `
+    Start-Process 'C:\python-installer.exe' -ArgumentList '/quiet', 'InstallAllUsers=1', 'PrependPath=1', 'Include_test=0' -Wait; `
+    Remove-Item 'C:\python-installer.exe' -Force
+
+# Verify Python installation
+RUN python --version; `
+    pip --version
+
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY src\ .\src\
+COPY fmus\ .\fmus\
+
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR C:\app\src
+ENTRYPOINT ["python", "host_cosim_and_connect_kuksa.py"]
+
+CMD ["localhost:55555"]
+
+docker build -f Dockerfile.windows -t vecu-kuksa:windows .
+
