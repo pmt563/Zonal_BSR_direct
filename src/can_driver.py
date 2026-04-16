@@ -210,7 +210,7 @@ class CANDriver:
             return False
         print("Set CAN0 abit:1M OK!")
         
-        ret = self.canDLL.ZCAN_SetDbitBaud(self.m_dev, 0, 2000000)
+        ret = self.canDLL.ZCAN_SetDbitBaud(self.m_dev, 0, 500000)
         if ret != STATUS_OK:
             print("Set CAN0 dbit:5M failed!")
             return False
@@ -223,7 +223,7 @@ class CANDriver:
             return False
         print("Set CAN1 abit:1M OK!")
         
-        ret = self.canDLL.ZCAN_SetDbitBaud(self.m_dev, 1, 2000000)
+        ret = self.canDLL.ZCAN_SetDbitBaud(self.m_dev, 1, 500000)
         if ret != STATUS_OK:
             print("Set CAN1 dbit:5M failed!")
             return False
@@ -286,7 +286,7 @@ class CANDriver:
         self.frame.transmit_type = 0      # Normal transmission
         self.frame.frame.eff = 0          # Standard frame format
         self.frame.frame.rtr = 0          # Data frame
-        self.frame.frame.brs = 1          # Enable bit rate switching
+        self.frame.frame.brs = 0          # Enable bit rate switching
         self.frame.frame.can_id = CAN_ID_AIRBAG_CMD  # 0x150
         self.frame.frame.len = 3          # Data length = 3 bytes
         

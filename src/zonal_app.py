@@ -54,7 +54,7 @@ class ZonalApp:
             
             if status_received:
                 self._update_padl_status(padl_status)
-                # self._update_pael_status(pael_status)
+                self._update_pael_status(pael_status)
             else:
                 time.sleep(0.1)
                 wait_count += 1
