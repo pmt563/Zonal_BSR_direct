@@ -249,6 +249,8 @@ class CANDriver:
         # Prepare configuration
         init_config = ZCAN_CHANNEL_INIT_CONFIG()
         init_config.can_type = TYPE_CANFD
+        init_config.config.canfd.acc_code = 0x00000000
+        init_config.config.canfd.acc_mask = 0xFFFFFFFF  
         init_config.config.canfd.mode = 0
 
         # Initialize CAN0
@@ -383,28 +385,36 @@ class CANDriver:
         Returns:
             tuple: (success, padl_status, pael_status) or (False, None, None)
         """
-        ret = self.canDLL.ZCAN_GetReceiveNum(self.dev_ch1, TYPE_CANFD)
-        print(f"[Driver][receive_airbag_status] Received {ret} messages")
-        if ret <= 0:
-            print(f"[Driver][receive_airbag_status] No messages received")
-            return False, None, None
-            
-        rcv_msgs = (ZCAN_ReceiveFD_Data * ret)()
-        num = self.canDLL.ZCAN_ReceiveFD(self.dev_ch1, byref(rcv_msgs), ret, 100)
+        ret_fd = self.canDLL.ZCAN_GetReceiveNum(self.dev_ch1, TYPE_CANFD)
+        ret_can = self.canDLL.ZCAN_GetReceiveNum(self.dev_ch1, TYPE_CAN)
+        print(f"[Driver][receive_airbag_status] CANFD buffer: {ret_fd}, CAN buffer: {ret_can}")
         
-        if num <= 0:
-            return False, None, None
-            
-        for i in range(num):
-            data = [rcv_msgs[i].frame.data[j] for j in range(rcv_msgs[i].frame.len)]
-            print(f"[Driver][receive_airbag_status] Received messages with ID: {hex(rcv_msgs[i].frame.can_id)}")
-            # Only process messages with the airbag status ID
-            if rcv_msgs[i].frame.can_id == CAN_ID_AIRBAG_RESPONSE:
-                # Extract PADL and PAEL status
-                padl_status = (data[3] & 0b00001000) >> 3
-                pael_status = (data[3] & 0b00000100) >> 2
-                return True, padl_status, pael_status
-                
+        if ret_fd > 0:
+            rcv_msgs = (ZCAN_ReceiveFD_Data * ret_fd)()
+            num = self.canDLL.ZCAN_ReceiveFD(self.dev_ch1, byref(rcv_msgs), ret_fd, 100)
+            if num > 0:
+                for i in range(num):
+                    data = [rcv_msgs[i].frame.data[j] for j in range(rcv_msgs[i].frame.len)]
+                    print(f"[Driver][receive_airbag_status] CANFD frame ID: {hex(rcv_msgs[i].frame.can_id)}, Data: {[hex(x) for x in data]}")
+                    if rcv_msgs[i].frame.can_id == CAN_ID_AIRBAG_RESPONSE:
+                        padl_status = (data[3] & 0b00001000) >> 3
+                        pael_status = (data[3] & 0b00000100) >> 2
+                        return True, padl_status, pael_status
+        
+        if ret_can > 0:
+            rcv_can_msgs = (ZCAN_Receive_Data * ret_can)()
+            num_can = self.canDLL.ZCAN_Receive(self.dev_ch1, byref(rcv_can_msgs), ret_can, 100)
+            if num_can > 0:
+                for i in range(num_can):
+                    data = [rcv_can_msgs[i].frame.data[j] for j in range(rcv_can_msgs[i].frame.can_dlc)]
+                    print(f"[Driver][receive_airbag_status] CAN frame ID: {hex(rcv_can_msgs[i].frame.can_id)}, Data: {[hex(x) for x in data]}")
+                    if rcv_can_msgs[i].frame.can_id == CAN_ID_AIRBAG_RESPONSE:
+                        padl_status = (data[3] & 0b00001000) >> 3
+                        pael_status = (data[3] & 0b00000100) >> 2
+                        return True, padl_status, pael_status
+        
+        if ret_fd <= 0 and ret_can <= 0:
+            print(f"[Driver][receive_airbag_status] No messages in either buffer")
         return False, None, None
         
     def cleanup(self):
