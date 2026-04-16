@@ -324,6 +324,9 @@ class CANDriver:
         result = self.canDLL.ZCAN_TransmitFD(self.dev_ch1, byref(self.frame), 1)
         data_sent = [hex(self.frame.frame.data[i]) for i in range(self.frame.frame.len)]
         
+        # Logging
+        print(f"[Driver][send_airbag_command] Airbag command: {data_sent}, result: {result}")
+        print(f"[Driver][send_airbag_command] Expected: result = true/1")
         return result > 0, data_sent
         
     def process_loopback(self):
@@ -381,7 +384,9 @@ class CANDriver:
             tuple: (success, padl_status, pael_status) or (False, None, None)
         """
         ret = self.canDLL.ZCAN_GetReceiveNum(self.dev_ch1, TYPE_CANFD)
+        print(f"[Driver][receive_airbag_status] Received {ret} messages")
         if ret <= 0:
+            print(f"[Driver][receive_airbag_status] No messages received")
             return False, None, None
             
         rcv_msgs = (ZCAN_ReceiveFD_Data * ret)()
@@ -392,7 +397,7 @@ class CANDriver:
             
         for i in range(num):
             data = [rcv_msgs[i].frame.data[j] for j in range(rcv_msgs[i].frame.len)]
-            
+            print(f"[Driver][receive_airbag_status] Received messages with ID: {hex(rcv_msgs[i].frame.can_id)}")
             # Only process messages with the airbag status ID
             if rcv_msgs[i].frame.can_id == CAN_ID_AIRBAG_RESPONSE:
                 # Extract PADL and PAEL status
